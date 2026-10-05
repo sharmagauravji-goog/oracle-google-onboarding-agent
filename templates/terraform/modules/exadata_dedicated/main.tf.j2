@@ -1,0 +1,201 @@
+# Exadata Database Service on Dedicated Infrastructure Enterprise Module
+
+variable "project_id" {
+  type = string
+}
+
+variable "region" {
+  type = string
+}
+
+variable "gcp_oracle_zone" {
+  type = string
+}
+
+variable "environment" {
+  type = string
+}
+
+variable "cost_center" {
+  type    = string
+  default = null
+}
+
+variable "data_classification" {
+  type    = string
+  default = null
+}
+
+variable "odb_network_name" {
+  type = string
+}
+
+variable "odb_client_subnet_name" {
+  type = string
+}
+
+variable "odb_backup_subnet_name" {
+  type = string
+}
+
+variable "exadata_infra_id" {
+  type = string
+}
+
+variable "exadata_display_name" {
+  type = string
+}
+
+variable "shape" {
+  type = string
+}
+
+variable "compute_count" {
+  type = number
+}
+
+variable "storage_count" {
+  type = number
+}
+
+variable "maintenance_window_preference" {
+  type    = string
+  default = "CUSTOM_PREFERENCE"
+}
+
+variable "vm_cluster_id" {
+  type = string
+}
+
+variable "vm_cluster_display_name" {
+  type = string
+}
+
+variable "cpu_core_count" {
+  type = number
+}
+
+variable "memory_size_gb" {
+  type = number
+}
+
+variable "data_storage_size_tb" {
+  type = number
+}
+
+variable "db_node_storage_size_gb" {
+  type = number
+}
+
+variable "gi_version" {
+  type = string
+}
+
+variable "hostname_prefix" {
+  type = string
+}
+
+variable "ssh_public_keys" {
+  type = list(string)
+}
+
+variable "license_type" {
+  type = string
+}
+
+variable "is_sparse_diskgroup_enabled" {
+  type    = bool
+  default = false
+}
+
+variable "is_local_backup_enabled" {
+  type    = bool
+  default = false
+}
+
+variable "diagnostics_data_collection" {
+  type    = bool
+  default = true
+}
+
+variable "time_zone" {
+  type    = string
+  default = "UTC"
+}
+
+locals {
+  common_labels = merge(
+    {
+      environment = var.environment
+      workload    = "exadata-dedicated"
+      managed_by  = "terraform-odb-onboarding-agent"
+    },
+    var.cost_center != null ? { cost_center = var.cost_center } : {},
+    var.data_classification != null ? { data_classification = var.data_classification } : {}
+  )
+}
+
+resource "google_oracle_database_cloud_exadata_infrastructure" "this" {
+  cloud_exadata_infrastructure_id = var.exadata_infra_id
+  location                        = var.region
+  project                         = var.project_id
+  display_name                    = var.exadata_display_name
+  gcp_oracle_zone                 = var.gcp_oracle_zone
+
+  properties {
+    shape         = var.shape
+    compute_count = var.compute_count
+    storage_count = var.storage_count
+
+    maintenance_window {
+      preference = var.maintenance_window_preference
+    }
+  }
+
+  labels = local.common_labels
+}
+
+resource "google_oracle_database_cloud_vm_cluster" "this" {
+  cloud_vm_cluster_id    = var.vm_cluster_id
+  location               = var.region
+  project                = var.project_id
+  display_name           = var.vm_cluster_display_name
+  exadata_infrastructure = google_oracle_database_cloud_exadata_infrastructure.this.id
+  odb_network            = var.odb_network_name
+  odb_subnet             = var.odb_client_subnet_name
+  backup_odb_subnet      = var.odb_backup_subnet_name
+
+  properties {
+    cpu_core_count              = var.cpu_core_count
+    memory_size_gb              = var.memory_size_gb
+    data_storage_size_tb        = var.data_storage_size_tb
+    db_node_storage_size_gb     = var.db_node_storage_size_gb
+    gi_version                  = var.gi_version
+    hostname_prefix             = var.hostname_prefix
+    ssh_public_keys             = var.ssh_public_keys
+    license_type                = var.license_type
+    sparse_diskgroup_enabled    = var.is_sparse_diskgroup_enabled
+    local_backup_enabled        = var.is_local_backup_enabled
+    time_zone {
+      id = var.time_zone
+    }
+
+    diagnostics_data_collection_options {
+      diagnostics_events_enabled = var.diagnostics_data_collection
+      health_monitoring_enabled  = var.diagnostics_data_collection
+      incident_logs_enabled      = var.diagnostics_data_collection
+    }
+  }
+
+  labels = local.common_labels
+}
+
+output "exadata_infrastructure_name" {
+  description = "Fully qualified resource ID of the Cloud Exadata Infrastructure."
+  value       = google_oracle_database_cloud_exadata_infrastructure.this.id
+}
+
+output "cloud_vm_cluster_name" {
+  description = "Fully qualified resource ID of the Cloud VM Cluster."
+  value       = google_oracle_database_cloud_vm_cluster.this.id
+}

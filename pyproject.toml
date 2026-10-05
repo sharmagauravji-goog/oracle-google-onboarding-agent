@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oracle-google-onboarding-agent"
+version = "1.0.0"
+description = "Interactive Onboarding & Infrastructure Agent for Oracle Database@Google Cloud (ODB@GCP)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [
+  { name = "Cloud Infrastructure & AI Architecture Team" }
+]
+dependencies = [
+  "pydantic>=2.7.0",
+  "typer>=0.12.0",
+  "rich>=13.7.0",
+  "streamlit>=1.36.0",
+  "Jinja2>=3.1.4",
+  "PyYAML>=6.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2.0",
+]
+
+[project.scripts]
+odb-agent = "agent.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agent*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-v"

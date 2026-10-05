@@ -1,0 +1,28 @@
+services:
+  odb-onboarding-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: odb-google-onboarding-web
+    ports:
+      # Bind exclusively to localhost (127.0.0.1) by default for secure local execution
+      - "127.0.0.1:8501:8501"
+    volumes:
+      - ./output:/app/output
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  odb-onboarding-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: odb-google-onboarding-cli
+    entrypoint: ["python", "-m", "agent.cli"]
+    command: ["interview", "--output-dir", "/app/output"]
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./output:/app/output
+    profiles:
+      - cli

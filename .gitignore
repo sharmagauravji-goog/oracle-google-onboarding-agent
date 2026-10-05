@@ -1,0 +1,24 @@
+# Virtual environment & Python cache
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+
+# Local environment & secrets
+.env
+*.tfvars
+!templates/**/*.tfvars.j2
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Generated output & local agent metadata
+output/
+.agents/
+.DS_Store

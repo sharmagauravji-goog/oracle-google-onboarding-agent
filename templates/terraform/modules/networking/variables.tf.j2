@@ -1,0 +1,73 @@
+variable "project_id" {
+  description = "Google Cloud Service Project ID."
+  type        = string
+}
+
+variable "network_project_id" {
+  description = "Google Cloud Project ID owning the target VPC network (Host Project for Shared VPC)."
+  type        = string
+}
+
+variable "region" {
+  description = "Google Cloud region."
+  type        = string
+}
+
+variable "gcp_oracle_zone" {
+  description = "Google Cloud Oracle Zone."
+  type        = string
+}
+
+variable "environment" {
+  description = "Deployment environment label."
+  type        = string
+}
+
+variable "cost_center" {
+  description = "Optional Enterprise FinOps cost center label."
+  type        = string
+  default     = null
+}
+
+variable "data_classification" {
+  description = "Optional Enterprise data security classification label."
+  type        = string
+  default     = null
+}
+
+variable "vpc_network_name" {
+  description = "Target Google Cloud VPC network name."
+  type        = string
+}
+
+variable "odb_network_id" {
+  description = "ODB Network resource ID."
+  type        = string
+}
+
+variable "odb_network_display_name" {
+  description = "ODB Network display name."
+  type        = string
+}
+
+variable "client_subnet_id" {
+  description = "ODB Client Subnet ID."
+  type        = string
+}
+
+variable "client_subnet_cidr" {
+  description = "ODB Client Subnet CIDR range."
+  type        = string
+}
+
+variable "backup_subnet_id" {
+  description = "Optional ODB Backup Subnet ID."
+  type        = string
+  default     = null
+}
+
+variable "backup_subnet_cidr" {
+  description = "Optional ODB Backup Subnet CIDR range."
+  type        = string
+  default     = null
+}

@@ -1,0 +1,182 @@
+# Exadata Database Service on Exascale Infrastructure Enterprise Module
+
+variable "project_id" {
+  type = string
+}
+
+variable "region" {
+  type = string
+}
+
+variable "gcp_oracle_zone" {
+  type = string
+}
+
+variable "environment" {
+  type = string
+}
+
+variable "cost_center" {
+  type    = string
+  default = null
+}
+
+variable "data_classification" {
+  type    = string
+  default = null
+}
+
+variable "odb_network_name" {
+  type = string
+}
+
+variable "odb_client_subnet_name" {
+  type = string
+}
+
+variable "odb_backup_subnet_name" {
+  type = string
+}
+
+variable "vault_id" {
+  type = string
+}
+
+variable "vault_display_name" {
+  type = string
+}
+
+variable "high_capacity_database_storage_gb" {
+  type = number
+}
+
+variable "additional_flash_cache_percent" {
+  type = number
+}
+
+variable "vm_cluster_id" {
+  type = string
+}
+
+variable "vm_cluster_display_name" {
+  type = string
+}
+
+variable "shape_attribute" {
+  type = string
+}
+
+variable "node_count" {
+  type = number
+}
+
+variable "enabled_ecpu_count_per_node" {
+  type = number
+}
+
+variable "vm_file_system_storage_size_gb" {
+  type = number
+}
+
+variable "gi_version" {
+  type = string
+}
+
+variable "hostname_prefix" {
+  type = string
+}
+
+variable "ssh_public_keys" {
+  type = list(string)
+}
+
+variable "license_type" {
+  type = string
+}
+
+variable "diagnostics_data_collection" {
+  type    = bool
+  default = true
+}
+
+variable "time_zone" {
+  type    = string
+  default = "UTC"
+}
+
+locals {
+  common_labels = merge(
+    {
+      environment = var.environment
+      workload    = "exascale"
+      managed_by  = "terraform-odb-onboarding-agent"
+    },
+    var.cost_center != null ? { cost_center = var.cost_center } : {},
+    var.data_classification != null ? { data_classification = var.data_classification } : {}
+  )
+}
+
+resource "google_oracle_database_exascale_db_storage_vault" "this" {
+  exascale_db_storage_vault_id = var.vault_id
+  location                     = var.region
+  project                      = var.project_id
+  display_name                 = var.vault_display_name
+  gcp_oracle_zone              = var.gcp_oracle_zone
+
+  properties {
+    additional_flash_cache_percent = var.additional_flash_cache_percent
+    exascale_db_storage_details {
+      total_size_gbs = var.high_capacity_database_storage_gb
+    }
+  }
+
+  labels = local.common_labels
+}
+
+resource "google_oracle_database_exadb_vm_cluster" "this" {
+  exadb_vm_cluster_id = var.vm_cluster_id
+  location            = var.region
+  project             = var.project_id
+  display_name        = var.vm_cluster_display_name
+  gcp_oracle_zone     = var.gcp_oracle_zone
+  odb_network         = var.odb_network_name
+  odb_subnet          = var.odb_client_subnet_name
+  backup_odb_subnet   = var.odb_backup_subnet_name
+
+  properties {
+    exascale_db_storage_vault   = google_oracle_database_exascale_db_storage_vault.this.id
+    shape_attribute             = var.shape_attribute
+    node_count                  = var.node_count
+    enabled_ecpu_count_per_node = var.enabled_ecpu_count_per_node
+    grid_image_id               = var.gi_version
+    hostname_prefix             = var.hostname_prefix
+    ssh_public_keys             = var.ssh_public_keys
+    license_model               = var.license_type
+
+    vm_file_system_storage {
+      size_in_gbs_per_node = var.vm_file_system_storage_size_gb
+    }
+
+    time_zone {
+      id = var.time_zone
+    }
+
+    diagnostics_data_collection_options {
+      is_diagnostics_events_enabled = var.diagnostics_data_collection
+      is_health_monitoring_enabled  = var.diagnostics_data_collection
+      is_incident_logs_enabled      = var.diagnostics_data_collection
+    }
+  }
+
+  labels = local.common_labels
+}
+
+output "exascale_storage_vault_name" {
+  description = "Fully qualified resource ID of the Exascale DB Storage Vault."
+  value       = google_oracle_database_exascale_db_storage_vault.this.id
+}
+
+output "exadb_vm_cluster_name" {
+  description = "Fully qualified resource ID of the Exascale VM Cluster."
+  value       = google_oracle_database_exadb_vm_cluster.this.id
+}

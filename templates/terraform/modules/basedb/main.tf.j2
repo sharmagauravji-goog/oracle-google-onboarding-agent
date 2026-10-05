@@ -1,0 +1,163 @@
+# Oracle Base Database Service (DB System) Enterprise Module
+
+variable "project_id" {
+  type = string
+}
+
+variable "region" {
+  type = string
+}
+
+variable "gcp_oracle_zone" {
+  type = string
+}
+
+variable "environment" {
+  type = string
+}
+
+variable "cost_center" {
+  type    = string
+  default = null
+}
+
+variable "data_classification" {
+  type    = string
+  default = null
+}
+
+variable "odb_network_name" {
+  type = string
+}
+
+variable "odb_client_subnet_name" {
+  type = string
+}
+
+variable "db_system_id" {
+  type = string
+}
+
+variable "display_name" {
+  type = string
+}
+
+variable "shape" {
+  type = string
+}
+
+variable "database_edition" {
+  type = string
+}
+
+variable "storage_management" {
+  type = string
+}
+
+variable "initial_data_storage_size_gb" {
+  type = number
+}
+
+variable "data_storage_percentage" {
+  type    = number
+  default = 80
+}
+
+variable "cpu_core_count" {
+  type = number
+}
+
+variable "node_count" {
+  type = number
+}
+
+variable "db_version" {
+  type = string
+}
+
+variable "db_name" {
+  type = string
+}
+
+variable "character_set" {
+  type    = string
+  default = "AL32UTF8"
+}
+
+variable "time_zone" {
+  type    = string
+  default = "UTC"
+}
+
+variable "hostname_prefix" {
+  type = string
+}
+
+variable "ssh_public_keys" {
+  type = list(string)
+}
+
+variable "license_type" {
+  type = string
+}
+
+variable "db_admin_password" {
+  type      = string
+  sensitive = true
+}
+
+resource "google_oracle_database_db_system" "this" {
+  db_system_id    = var.db_system_id
+  location        = var.region
+  project         = var.project_id
+  display_name    = var.display_name
+  gcp_oracle_zone = var.gcp_oracle_zone
+  odb_network     = var.odb_network_name
+  odb_subnet      = var.odb_client_subnet_name
+
+  properties {
+    shape                        = var.shape
+    database_edition             = var.database_edition
+    initial_data_storage_size_gb = var.initial_data_storage_size_gb
+    data_storage_percentage      = var.data_storage_percentage
+    compute_count                = var.cpu_core_count
+    node_count                   = var.node_count
+    hostname_prefix              = var.hostname_prefix
+    ssh_public_keys              = var.ssh_public_keys
+    license_model                = var.license_type
+
+    time_zone {
+      id = var.time_zone
+    }
+
+    db_system_options {
+      storage_management = var.storage_management
+    }
+
+    db_home {
+      db_version = var.db_version
+
+      database {
+        admin_password = var.db_admin_password
+        db_name        = var.db_name
+        database_id    = var.db_name
+        character_set  = var.character_set
+      }
+    }
+  }
+
+  labels = merge(
+    {
+      environment = var.environment
+      workload    = "base-database"
+      managed_by  = "terraform-odb-onboarding-agent"
+    },
+    var.cost_center != null ? { cost_center = var.cost_center } : {},
+    var.data_classification != null ? { data_classification = var.data_classification } : {}
+  )
+}
+
+output "db_system_name" {
+  description = "Fully qualified resource ID of the Oracle Base Database System."
+  value       = google_oracle_database_db_system.this.id
+}

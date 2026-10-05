@@ -1,0 +1,19 @@
+output "odb_network_id" {
+  description = "ODB Network resource ID."
+  value       = google_oracle_database_odb_network.this.odb_network_id
+}
+
+output "odb_network_name" {
+  description = "Fully qualified resource ID of the ODB Network."
+  value       = google_oracle_database_odb_network.this.id
+}
+
+output "client_subnet_name" {
+  description = "Fully qualified resource ID of the ODB Client Subnet."
+  value       = google_oracle_database_odb_subnet.client.id
+}
+
+output "backup_subnet_name" {
+  description = "Fully qualified resource ID of the ODB Backup Subnet (if created)."
+  value       = length(google_oracle_database_odb_subnet.backup) > 0 ? google_oracle_database_odb_subnet.backup[0].id : null
+}

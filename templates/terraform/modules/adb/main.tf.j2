@@ -1,0 +1,153 @@
+# Autonomous Database Serverless (ADB-S) Enterprise Module
+
+variable "project_id" {
+  type = string
+}
+
+variable "region" {
+  type = string
+}
+
+variable "environment" {
+  type = string
+}
+
+variable "cost_center" {
+  type    = string
+  default = null
+}
+
+variable "data_classification" {
+  type    = string
+  default = null
+}
+
+variable "deletion_protection" {
+  type    = bool
+  default = true
+}
+
+variable "odb_network_name" {
+  type = string
+}
+
+variable "odb_client_subnet_name" {
+  type = string
+}
+
+variable "instance_id" {
+  type = string
+}
+
+variable "display_name" {
+  type = string
+}
+
+variable "db_name" {
+  type = string
+}
+
+variable "db_workload" {
+  type = string
+}
+
+variable "db_version" {
+  type = string
+}
+
+variable "compute_count" {
+  type = number
+}
+
+variable "data_storage_size_tb" {
+  type = number
+}
+
+variable "is_auto_scaling_enabled" {
+  type = bool
+}
+
+variable "license_type" {
+  type = string
+}
+
+variable "mtls_connection_required" {
+  type = bool
+}
+
+variable "backup_retention_period_days" {
+  type    = number
+  default = 30
+}
+
+variable "is_local_data_guard_enabled" {
+  type    = bool
+  default = true
+}
+
+variable "character_set" {
+  type    = string
+  default = "AL32UTF8"
+}
+
+variable "ncharacter_set" {
+  type    = string
+  default = "AL16UTF16"
+}
+
+variable "maintenance_schedule_type" {
+  type    = string
+  default = "REGULAR"
+}
+
+variable "db_admin_password" {
+  type      = string
+  sensitive = true
+}
+
+resource "google_oracle_database_autonomous_database" "this" {
+  autonomous_database_id = var.instance_id
+  location               = var.region
+  project                = var.project_id
+  display_name           = var.display_name
+  database               = var.db_name
+  admin_password         = var.db_admin_password
+  odb_network            = var.odb_network_name
+  odb_subnet             = var.odb_client_subnet_name
+  deletion_protection    = var.deletion_protection
+
+  properties {
+    compute_count                = var.compute_count
+    data_storage_size_tb         = var.data_storage_size_tb
+    db_version                   = var.db_version
+    db_workload                  = var.db_workload
+    license_type                 = var.license_type
+    is_auto_scaling_enabled      = var.is_auto_scaling_enabled
+    mtls_connection_required     = var.mtls_connection_required
+    backup_retention_period_days = var.backup_retention_period_days
+    is_local_data_guard_enabled  = var.is_local_data_guard_enabled
+    character_set                = var.character_set
+    ncharacter_set               = var.ncharacter_set
+    maintenance_schedule_type    = var.maintenance_schedule_type
+  }
+
+  labels = merge(
+    {
+      environment = var.environment
+      workload    = "adb-serverless"
+      managed_by  = "terraform-odb-onboarding-agent"
+    },
+    var.cost_center != null ? { cost_center = var.cost_center } : {},
+    var.data_classification != null ? { data_classification = var.data_classification } : {}
+  )
+}
+
+output "autonomous_database_name" {
+  description = "Fully qualified resource ID of the Autonomous Database."
+  value       = google_oracle_database_autonomous_database.this.id
+}
+
+output "oci_link" {
+  description = "Deep link to OCI console for the Autonomous Database."
+  value       = google_oracle_database_autonomous_database.this.entitlement_id
+}
